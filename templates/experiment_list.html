@@ -59,9 +59,7 @@
             <!-- Столбец Результаты -->
             <td style="padding: 12px;">
                 {% if exp.results %}
-                    <span style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; font-weight: 500; display: inline-block;">
-                        ✓ Есть результаты
-                    </span>
+                    <span style="color: #333; white-space: pre-wrap;">{{ exp.results }}</span>
                 {% else %}
                     <span style="color: #ccc;">-</span>
                 {% endif %}
