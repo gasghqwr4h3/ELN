@@ -26,7 +26,7 @@
                 </p>
             </div>
             
-            <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px; white-space: nowrap;">
                 {% if storage.id != 'none' %}
                     <!-- Кнопки перемещения -->
                     <a href="/storage/move/{{ storage.id }}/up" class="btn" style="padding: 5px 10px; font-size: 0.9em;" title="Переместить выше">⬆️</a>
@@ -71,7 +71,7 @@
                                 <span style="color: #ccc;">-</span>
                             {% endif %}
                         </td>
-                        <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px; border-bottom: 1px solid #eee; white-space: nowrap;">
                             <a href="/samples/edit/{{ s.id }}" class="btn" style="padding: 2px 8px; font-size: 0.8em;">Ред.</a>
                         </td>
                     </tr>
