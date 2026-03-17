@@ -34,3 +34,8 @@ dist/
 build/
 *.egg-info/
 ```
+
+
+# Secret data
+data/
+uploads/

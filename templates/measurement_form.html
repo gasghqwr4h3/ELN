@@ -11,7 +11,7 @@
     <label>Программа измерений</label>
     <textarea name="measurement_program" rows="5">{{ measurement.measurement_program if measurement else '' }}</textarea>
     
-    <label>Заметка</label>
+    <label>Анализ/Оборудование, на котором проводится измерение</label>
     <input type="text" name="note" value="{{ measurement.note if measurement else '' }}">
     
     <label>Статус измерения</label>
