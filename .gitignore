@@ -1,32 +1,32 @@
 ```
-# Python
-__pycache__/
+# Compiled Python files
 *.pyc
-*.pyo
-*.pyd
+__pycache__/
 
 # Dependencies
 venv/
 .venv/
 .env
 .env.local
-.env.*
+*.env.*
 
-# Logs
+# Logs and temporary files
 *.log
-
-# Temporary files
 *.tmp
 *.swp
 
-# Editors
-.vscode/
-.idea/
-
-# Coverage
+# Coverage reports
 .coverage
 coverage/
 htmlcov/
+
+# IDE specific
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
 
 # Build artifacts
 dist/

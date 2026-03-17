@@ -20,6 +20,9 @@
         <option value="Ошибка" {% if measurement and measurement.status == 'Ошибка' %}selected{% endif %}>❌ Ошибка</option>
     </select>
     
+    <label>Дата</label>
+    <input type="text" name="date" value="{{ measurement.date if measurement and measurement.date else '' }}">
+    
     <label>Файлы</label>
     <input type="file" name="files" multiple>
     
