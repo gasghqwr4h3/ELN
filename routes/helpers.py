@@ -6,7 +6,8 @@ def get_data(file_path):
     if not os.path.exists(file_path):
         return {
             'storages': [], 
-            'samples': []
+            'samples': [],
+            'measurements': []
         }
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -14,11 +15,13 @@ def get_data(file_path):
             # Гарантируем наличие ключей
             if 'storages' not in data: data['storages'] = []
             if 'samples' not in data: data['samples'] = []
+            if 'measurements' not in data: data['measurements'] = []
             return data
     except Exception:
         return {
             'storages': [], 
-            'samples': []
+            'samples': [],
+            'measurements': []
         }
 
 def save_data(file_path, data):

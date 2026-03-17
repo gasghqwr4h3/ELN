@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{% if measurement %}Редактировать измерение{% else %}Новое измерение{% endif %}</h2>
+<form method="POST" enctype="multipart/form-data">
+    <label>Название *</label>
+    <input type="text" name="name" value="{{ measurement.name if measurement else '' }}" required>
+    
+    <label>Описание</label>
+    <textarea name="description" rows="5">{{ measurement.description if measurement else '' }}</textarea>
+    
+    <label>Заметка</label>
+    <input type="text" name="note" value="{{ measurement.note if measurement else '' }}">
+    
+    <label>Статус измерения</label>
+    <select name="status">
+        <option value="">— Не указано —</option>
+        <option value="Отдать на измерения" {% if measurement and measurement.status == 'Отдать на измерения' %}selected{% endif %}>📤 Отдать на измерения</option>
+        <option value="На измерениях" {% if measurement and measurement.status == 'На измерениях' %}selected{% endif %}>⏳ На измерениях</option>
+        <option value="Готово" {% if measurement and measurement.status == 'Готово' %}selected{% endif %}>✅ Готово</option>
+        <option value="Ошибка" {% if measurement and measurement.status == 'Ошибка' %}selected{% endif %}>❌ Ошибка</option>
+    </select>
+    
+    <label>Файлы</label>
+    <input type="file" name="files" multiple>
+    
+    {% if measurement and measurement.files %}
+    <div style="margin-top: 15px;">
+        <strong>Текущие файлы:</strong>
+        <ul style="list-style: none; padding: 0; margin-top: 10px;">
+            {% for file in measurement.files %}
+            <li style="padding: 8px; background: #f8f9fa; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+                <span>📄 {{ file }}</span>
+                <a href="/measurements/delete_file/{{ measurement.id }}/{{ file }}" class="btn btn-danger btn-sm" onclick="return confirm('Удалить файл?')">Удалить</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    
+    <div style="margin-top: 20px;">
+        <button type="submit" class="btn btn-success">{% if measurement %}Сохранить{% else %}Создать{% endif %}</button>
+        <a href="/measurements" class="btn">Отмена</a>
+    </div>
+</form>
+{% endblock %}

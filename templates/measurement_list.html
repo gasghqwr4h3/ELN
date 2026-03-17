@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h2 style="margin: 0;">Измерения</h2>
+    <a href="/measurements/add" class="btn btn-success">Добавить измерение</a>
+</div>
+
+<table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <thead>
+        <tr style="background: #f8f9fa; text-align: left; border-bottom: 2px solid #dee2e6;">
+            <th style="padding: 12px;">Название / Описание</th>
+            <th style="padding: 12px;">Заметка</th>
+            <th style="padding: 12px;">Статус измерения</th>
+            <th style="padding: 12px;">Файлы</th>
+            <th style="padding: 12px; text-align: right;">Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for m in measurements %}
+        <!-- Основная строка измерения -->
+        <tr style="border-bottom: 1px solid #eee; vertical-align: top;">
+            <td style="padding: 12px;">
+                <div style="font-weight: bold; font-size: 1.05em; color: #333;">{{ m.name }}</div>
+                <div style="margin-top: 4px;">
+                    <details style="cursor: pointer;">
+                        <summary style="color: #007bff; font-size: 0.9em; list-style: none; display: inline-block;">
+                            📝 Описание <span style="font-size: 0.8em; color: #999;">(нажми)</span>
+                        </summary>
+                    </details>
+                </div>
+            </td>
+            
+            <!-- Столбец Заметка -->
+            <td style="padding: 12px;">
+                {% if m.note %}
+                    <span style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; font-weight: 500; display: inline-block;">
+                        🧪 {{ m.note }}
+                    </span>
+                {% else %}
+                    <span style="color: #ccc;">-</span>
+                {% endif %}
+            </td>
+
+            <!-- Столбец Статус измерения (переключатель) -->
+            <td style="padding: 12px;">
+                <select onchange="updateMeasurementStatus({{ m.id }}, this.value)" style="padding: 6px 10px; border-radius: 4px; border: 1px solid #ddd; font-size: 0.9em; cursor: pointer;
+                    {% if m.status == 'Отдать на измерения' %}background: #fff3e0; color: #f57c00;
+                    {% elif m.status == 'На измерениях' %}background: #e3f2fd; color: #1976d2;
+                    {% elif m.status == 'Готово' %}background: #e8f5e9; color: #2e7d32;
+                    {% elif m.status == 'Ошибка' %}background: #ffebee; color: #c62828;
+                    {% else %}background: #f5f5f5; color: #666;{% endif %}">
+                    <option value="" {% if not m.status %}selected{% endif %}>— Не указано —</option>
+                    <option value="Отдать на измерения" {% if m.status == 'Отдать на измерения' %}selected{% endif %}>📤 Отдать на измерения</option>
+                    <option value="На измерениях" {% if m.status == 'На измерениях' %}selected{% endif %}>⏳ На измерениях</option>
+                    <option value="Готово" {% if m.status == 'Готово' %}selected{% endif %}>✅ Готово</option>
+                    <option value="Ошибка" {% if m.status == 'Ошибка' %}selected{% endif %}>❌ Ошибка</option>
+                </select>
+            </td>
+
+            <!-- Столбец Файлы -->
+            <td style="padding: 12px;">
+                {% if m.files %}
+                    <details>
+                        <summary style="cursor: pointer; color: #d84315; font-size: 0.9em; list-style: none; display: inline-block;">
+                            📁 Файлов: {{ m.files|length }}
+                        </summary>
+                        <div style="margin-top: 5px; padding-left: 0; font-size: 0.85em;">
+                            {% for file in m.files %}
+                                <div style="margin-bottom: 3px; display: flex; align-items: center; gap: 5px;">
+                                    <a href="/measurements/file/{{ m.id }}/{{ file }}" target="_blank" style="color: #555; text-decoration: none;">📄 {{ file }}</a>
+                                </div>
+                            {% endfor %}
+                            <div style="margin-top: 5px;">
+                                <a href="/measurements/folder/{{ m.id }}" class="btn" style="padding: 2px 6px; font-size: 0.75em; background: #607d8b;">📂 Папка</a>
+                            </div>
+                        </div>
+                    </details>
+                {% else %}
+                    <span style="color: #ccc;">-</span>
+                {% endif %}
+            </td>
+
+            <!-- Столбец Действия -->
+            <td style="padding: 12px; text-align: right;">
+                <a href="/measurements/edit/{{ m.id }}" class="btn" style="padding: 4px 8px; font-size: 0.85em;">Ред.</a>
+                <a href="/measurements/delete/{{ m.id }}" class="btn btn-danger" style="padding: 4px 8px; font-size: 0.85em;" onclick="return confirm('Удалить измерение и все файлы?')">Удалить</a>
+            </td>
+        </tr>
+
+        <!-- Скрытая строка с полным описанием -->
+        <tr id="description-row-{{ m.id }}" style="display: none; background: #fafafa;">
+            <td colspan="5" style="padding: 15px; border-top: 1px dashed #ddd; border-bottom: 1px solid #eee;">
+                <strong>Описание:</strong>
+                <div style="margin-top: 8px; color: #444; line-height: 1.6; white-space: pre-wrap;">
+                    {{ m.description if m.description else 'Описание отсутствует.' }}
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    // Логика открытия спойлера описания
+    document.querySelectorAll('summary').forEach(summary => {
+        summary.addEventListener('click', function(e) {
+            const currentRow = this.closest('tr');
+            const text = this.innerText.toLowerCase();
+            
+            if (text.includes('описание')) {
+                e.preventDefault();
+                const nextRow = currentRow.nextElementSibling;
+                
+                if (nextRow && nextRow.id && nextRow.id.startsWith('description-row-')) {
+                    if (nextRow.style.display === 'none') {
+                        nextRow.style.display = 'table-row';
+                    } else {
+                        nextRow.style.display = 'none';
+                    }
+                }
+            }
+        });
+    });
+
+    // Функция обновления статуса измерения
+    function updateMeasurementStatus(id, status) {
+        fetch('/measurements/' + id + '/status', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({status: status})
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Ошибка при обновлении статуса');
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('Ошибка при обновлении статуса');
+        });
+    }
+</script>
+{% endblock %}

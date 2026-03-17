@@ -2,6 +2,7 @@ import os
 from flask import Flask, render_template
 from routes.samples import samples_bp
 from routes.storage import storage_bp
+from routes.measurements import measurements_bp
 
 def create_app():
     app = Flask(__name__)
@@ -16,6 +17,7 @@ def create_app():
 
     app.register_blueprint(samples_bp, url_prefix='/samples')
     app.register_blueprint(storage_bp, url_prefix='/storage')
+    app.register_blueprint(measurements_bp, url_prefix='/measurements')
 
     @app.route('/')
     def index():
@@ -23,7 +25,8 @@ def create_app():
         data = get_data(app.config['DATA_FILE'])
         stats = {
             'samples': len(data.get('samples', [])),
-            'storages': len(data.get('storages', []))
+            'storages': len(data.get('storages', [])),
+            'measurements': len(data.get('measurements', []))
         }
         return render_template('index.html', stats=stats, data=data)
 
