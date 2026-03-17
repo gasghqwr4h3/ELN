@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h2 style="margin: 0;">Образцы</h2>
+    <a href="/samples/add" class="btn btn-success">Добавить образец</a>
+</div>
+
+<table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <thead>
+        <tr style="background: #f8f9fa; text-align: left; border-bottom: 2px solid #dee2e6;">
+            <th style="padding: 12px;">Название / Описание</th>
+            <th style="padding: 12px;">Заметка</th>
+            <th style="padding: 12px;">Статус (Где)</th>
+            <th style="padding: 12px;">Хранилище</th>
+            <th style="padding: 12px;">Файлы</th>
+            <th style="padding: 12px; text-align: right;">Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in samples %}
+        <!-- Основная строка образца -->
+        <tr style="border-bottom: 1px solid #eee; vertical-align: top;">
+            <td style="padding: 12px;">
+                <div style="font-weight: bold; font-size: 1.05em; color: #333;">{{ s.name }}</div>
+                <div style="margin-top: 4px;">
+                    <details style="cursor: pointer;">
+                        <summary style="color: #007bff; font-size: 0.9em; list-style: none; display: inline-block;">
+                            📝 Описание синтеза <span style="font-size: 0.8em; color: #999;">(нажми)</span>
+                        </summary>
+                    </details>
+                </div>
+            </td>
+            
+            <!-- Столбец Заметка -->
+            <td style="padding: 12px;">
+                {% if s.note %}
+                    <span style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; font-weight: 500; display: inline-block;">
+                        🧪 {{ s.note }}
+                    </span>
+                {% else %}
+                    <span style="color: #ccc;">-</span>
+                {% endif %}
+            </td>
+
+            <!-- Столбец Статус -->
+            <td style="padding: 12px;">
+                {% if s.status %}
+                    <span style="background: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; font-weight: 500; display: inline-block;">
+                        📍 {{ s.status }}
+                    </span>
+                {% else %}
+                    <span style="color: #ccc;">-</span>
+                {% endif %}
+            </td>
+
+            <!-- Столбец Хранилище -->
+            <td style="padding: 12px; color: #666;">
+                {{ s.storage_name }}
+            </td>
+
+            <!-- Столбец Файлы -->
+            <td style="padding: 12px;">
+                {% if s.files %}
+                    <details>
+                        <summary style="cursor: pointer; color: #d84315; font-size: 0.9em; list-style: none; display: inline-block;">
+                            📁 Файлов: {{ s.files|length }}
+                        </summary>
+                        <div style="margin-top: 5px; padding-left: 0; font-size: 0.85em;">
+                            {% for file in s.files %}
+                                <div style="margin-bottom: 3px; display: flex; align-items: center; gap: 5px;">
+                                    <a href="/samples/file/{{ s.id }}/{{ file }}" target="_blank" style="color: #555; text-decoration: none;">📄 {{ file }}</a>
+                                </div>
+                            {% endfor %}
+                            <div style="margin-top: 5px;">
+                                <a href="/samples/folder/{{ s.id }}" class="btn" style="padding: 2px 6px; font-size: 0.75em; background: #607d8b;">📂 Папка</a>
+                            </div>
+                        </div>
+                    </details>
+                {% else %}
+                    <span style="color: #ccc;">-</span>
+                {% endif %}
+            </td>
+
+            <!-- Столбец Действия -->
+            <td style="padding: 12px; text-align: right;">
+                <a href="/samples/edit/{{ s.id }}" class="btn" style="padding: 4px 8px; font-size: 0.85em;">Ред.</a>
+                <a href="/samples/delete/{{ s.id }}" class="btn btn-danger" style="padding: 4px 8px; font-size: 0.85em;" onclick="return confirm('Удалить образец и все файлы?')">Удалить</a>
+            </td>
+        </tr>
+
+        <!-- Скрытая строка с полным описанием синтеза -->
+        <tr id="synthesis-row-{{ s.id }}" style="display: none; background: #fafafa;">
+            <td colspan="6" style="padding: 15px; border-top: 1px dashed #ddd; border-bottom: 1px solid #eee;">
+                <strong>Описание синтеза:</strong>
+                <div style="margin-top: 8px; color: #444; line-height: 1.6; white-space: pre-wrap;">
+                    {{ s.description if s.description else 'Описание отсутствует.' }}
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    // Логика открытия спойлера синтеза
+    document.querySelectorAll('summary').forEach(summary => {
+        summary.addEventListener('click', function(e) {
+            // Находим родительскую строку (tr) текущего образца
+            const currentRow = this.closest('tr');
+            
+            // Проверяем, какой это спойлер: синтез или файлы
+            const text = this.innerText.toLowerCase();
+            
+            if (text.includes('описание синтеза')) {
+                e.preventDefault(); // Предотвращаем стандартное поведение, если нужно
+                
+                // Ищем следующую строку (скрытое описание) относительно текущей
+                const nextRow = currentRow.nextElementSibling;
+                
+                if (nextRow && nextRow.id && nextRow.id.startsWith('synthesis-row-')) {
+                    // Переключаем видимость
+                    if (nextRow.style.display === 'none') {
+                        nextRow.style.display = 'table-row';
+                    } else {
+                        nextRow.style.display = 'none';
+                    }
+                }
+            }
+            // Для спойлера с файлами ничего дополнительно делать не нужно, 
+            // стандартный тег <details> справится сам, и он не затронет строку синтеза
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Хранилища</h2>
+<div style="margin-top: 15px;">
+    <a href="/storage/add" class="btn btn-success">Добавить хранилище</a>
+</div>
+
+<div style="margin-top: 20px;">
+    {% for storage in storages %}
+    <div class="card" style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 15px;">
+            <div>
+                <h3 style="margin: 0; color: #333;">
+                    {% if storage.id == 'none' %}
+                        ⚠️ {{ storage.name }}
+                    {% else %}
+                        🏢 {{ storage.name }}
+                    {% endif %}
+                </h3>
+                <p style="margin: 5px 0 0; color: #666; font-size: 0.9em;">
+                    {% if storage.id != 'none' %}
+                        📍 {{ storage.location }} | {{ storage.description }}
+                    {% else %}
+                        {{ storage.description }}
+                    {% endif %}
+                </p>
+            </div>
+            
+            <div>
+                {% if storage.id != 'none' %}
+                    <a href="/storage/edit/{{ storage.id }}" class="btn" style="padding: 5px 10px; font-size: 0.9em;">Ред.</a>
+                    <a href="/storage/delete/{{ storage.id }}" class="btn btn-danger" style="padding: 5px 10px; font-size: 0.9em;" onclick="return confirm('Удалить хранилище? Образцы станут бездомными.')">Удалить</a>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if storage.samples %}
+            <table style="width: 100%; font-size: 0.95em;">
+                <thead>
+                    <tr style="background: #f8f9fa; text-align: left;">
+                        <th style="padding: 8px; border-bottom: 1px solid #ddd;">Название</th>
+                        <th style="padding: 8px; border-bottom: 1px solid #ddd;">Заметка</th>
+                        <th style="padding: 8px; border-bottom: 1px solid #ddd;">Статус (Где)</th>
+                        <th style="padding: 8px; border-bottom: 1px solid #ddd;">Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in storage.samples %}
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                            <strong>{{ s.name }}</strong>
+                        </td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                            {% if s.note %}
+                                <span style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; display: inline-block;">
+                                    🧪 {{ s.note }}
+                                </span>
+                            {% else %}
+                                <span style="color: #ccc;">-</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                            {% if s.status %}
+                                <span style="background: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; display: inline-block;">
+                                    📍 {{ s.status }}
+                                </span>
+                            {% else %}
+                                <span style="color: #ccc;">-</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                            <a href="/samples/edit/{{ s.id }}" class="btn" style="padding: 2px 8px; font-size: 0.8em;">Ред.</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p style="color: #999; font-style: italic;">В этом хранилище пока нет образцов.</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

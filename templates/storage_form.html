@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ 'Редактировать' if storage else 'Новое' }} хранилище</h2>
+<form method="POST">
+    <label>Название</label>
+    <input type="text" name="name" value="{{ storage.name if storage else '' }}" required>
+    <label>Расположение (Кабинет, шкаф)</label>
+    <input type="text" name="location" value="{{ storage.location if storage else '' }}" required>
+    <label>Описание</label>
+    <textarea name="description" rows="3">{{ storage.description if storage else '' }}</textarea>
+    <button type="submit" class="btn btn-success">Сохранить</button>
+    <a href="/storage" class="btn">Отмена</a>
+</form>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ 'Редактировать' if sample else 'Новый' }} образец</h2>
+<form method="POST" enctype="multipart/form-data">
+    <label>Название</label>
+    <input type="text" name="name" value="{{ sample.name if sample else '' }}" required>
+    
+    <label>Описание (синтез, методика)</label>
+    <textarea name="description" rows="5">{{ sample.description if sample else '' }}</textarea>
+    
+    <div style="display: flex; gap: 20px;">
+        <div style="flex: 1;">
+            <label>Заметка (кол-во, масса)</label>
+            <input type="text" name="note" value="{{ sample.note if sample else '' }}" placeholder="Например: 9 г, 5 таблеток">
+        </div>
+        <div style="flex: 1;">
+            <label>Статус (Где находится)</label>
+            <input type="text" name="status" value="{{ sample.status if sample else '' }}" placeholder="Например: Отправлен на XRD">
+        </div>
+    </div>
+    <small style="color: #666; display: block; margin-bottom: 15px;">Оба поля видны в общем списке.</small>
+
+    <label>Хранилище</label>
+    <select name="storage_id">
+        <option value="">-- Нет --</option>
+        {% for st in storages %}
+            <option value="{{ st.id }}" {% if sample and sample.storage_id == st.id %}selected{% endif %}>
+                {{ st.name }} ({{ st.location }})
+            </option>
+        {% endfor %}
+    </select>
+
+    <label>Файлы</label>
+    {% if sample and sample.files %}
+        <div style="margin-bottom: 15px; border: 1px solid #eee; padding: 10px; background: #fafafa;">
+            <strong>Загруженные файлы:</strong>
+            <ul style="list-style: none; padding: 0;">
+                {% for file in sample.files %}
+                    <li style="display: flex; justify-content: space-between; align-items: center; margin: 5px 0; padding: 5px; background: white; border: 1px solid #ddd;">
+                        <span>📄 {{ file }}</span>
+                        <div>
+                            <a href="/samples/file/{{ sample.id }}/{{ file }}" target="_blank" class="btn" style="padding: 4px 8px; font-size: 0.9em;">Открыть</a>
+                            <a href="/samples/delete_file/{{ sample.id }}/{{ file }}" class="btn btn-danger" style="padding: 4px 8px; font-size: 0.9em;" onclick="return confirm('Удалить этот файл?')">X</a>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+    
+    <input type="file" name="files" multiple>
+    <small>Можно выбрать несколько файлов сразу.</small>
+    
+    <div style="margin-top: 20px;">
+        <button type="submit" class="btn btn-success">Сохранить</button>
+        <a href="/samples" class="btn">Отмена</a>
+    </div>
+</form>
+{% endblock %}

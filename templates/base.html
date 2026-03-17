@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Lab Notebook</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #f4f6f9; color: #333; }
+        nav { background: #2c3e50; padding: 15px 20px; display: flex; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        nav a { color: #ecf0f1; text-decoration: none; margin-right: 25px; font-weight: 500; font-size: 1.1em; transition: color 0.2s; }
+        nav a:hover { color: #3498db; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 25px; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .btn { display: inline-block; padding: 10px 20px; background: #3498db; color: white; text-decoration: none; border-radius: 5px; border: none; cursor: pointer; font-size: 0.95em; transition: background 0.2s; }
+        .btn:hover { background: #2980b9; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-success { background: #27ae60; }
+        .btn-success:hover { background: #219150; }
+        .btn-sm { padding: 5px 10px; font-size: 0.85em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: #2c3e50; font-weight: 600; text-transform: uppercase; font-size: 0.85em; letter-spacing: 0.5px; }
+        tr:hover { background: #f1f4f6; }
+        .flash { padding: 15px; background: #d4edda; color: #155724; margin-bottom: 20px; border-radius: 5px; border-left: 5px solid #28a745; }
+        input, select, textarea { width: 100%; padding: 10px; margin: 8px 0 15px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; }
+        input:focus, select:focus, textarea:focus { border-color: #3498db; outline: none; box-shadow: 0 0 5px rgba(52,152,219,0.2); }
+        h2 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; display: inline-block; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
+        .badge-info { background: #e3f2fd; color: #1976d2; }
+        .badge-warning { background: #fff3e0; color: #f57c00; }
+        details { margin: 5px 0; }
+        summary { cursor: pointer; color: #3498db; font-weight: 500; outline: none; }
+        summary:hover { text-decoration: underline; }
+        .spoiler-content { padding: 10px; background: #f8f9fa; border: 1px solid #eee; border-radius: 4px; margin-top: 5px; white-space: pre-wrap; line-height: 1.6; }
+        .controls { margin-bottom: 15px; display: flex; gap: 10px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/">Главная</a>
+        <a href="/storage">Хранилища</a>
+        <a href="/samples">Образцы</a>
+    </nav>
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Лабораторный журнал</h1>
+<div style="display: flex; gap: 20px; margin-top: 30px; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 250px; padding: 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <h3 style="margin: 0 0 10px 0; opacity: 0.9; font-size: 1em; text-transform: uppercase;">Хранилища</h3>
+        <p style="font-size: 3em; font-weight: bold; margin: 0;">{{ stats.storages }}</p>
+        <a href="/storage" style="color: white; text-decoration: underline; opacity: 0.8; font-size: 0.9em;">Управление &rarr;</a>
+    </div>
+    <div style="flex: 1; min-width: 250px; padding: 25px; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); color: #333; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <h3 style="margin: 0 0 10px 0; opacity: 0.8; font-size: 1em; text-transform: uppercase;">Образцы</h3>
+        <p style="font-size: 3em; font-weight: bold; margin: 0;">{{ stats.samples }}</p>
+        <a href="/samples" style="color: #333; text-decoration: underline; opacity: 0.8; font-size: 0.9em;">Управление &rarr;</a>
+    </div>
+</div>
+
+<div style="margin-top: 40px;">
+    <h2>Быстрые действия</h2>
+    <div style="display: flex; gap: 15px; margin-top: 20px;">
+        <a href="/storage/add" class="btn btn-success">+ Новое хранилище</a>
+        <a href="/samples/add" class="btn btn-success">+ Новый образец</a>
+    </div>
+</div>
+{% endblock %}
