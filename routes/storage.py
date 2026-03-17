@@ -35,6 +35,48 @@ def list_storages():
     
     return render_template('storage_list.html', storages=display_list)
 
+@storage_bp.route('/move/<id>/<direction>')
+def move_storage(id, direction):
+    """Переместить хранилище вверх или вниз."""
+    if id == 'none':
+        flash('Виртуальное хранилище нельзя переместить', 'warning')
+        return redirect(url_for('storage.list_storages'))
+    
+    data = get_data(current_app.config['DATA_FILE'])
+    storages = data.get('storages', [])
+    
+    try:
+        id = int(id)
+    except ValueError:
+        flash('Неверный ID хранилища', 'error')
+        return redirect(url_for('storage.list_storages'))
+    
+    # Находим индекс текущего хранилища
+    current_idx = None
+    for i, s in enumerate(storages):
+        if s['id'] == id:
+            current_idx = i
+            break
+    
+    if current_idx is None:
+        flash('Хранилище не найдено', 'error')
+        return redirect(url_for('storage.list_storages'))
+    
+    # Определяем новый индекс
+    if direction == 'up' and current_idx > 0:
+        new_idx = current_idx - 1
+    elif direction == 'down' and current_idx < len(storages) - 1:
+        new_idx = current_idx + 1
+    else:
+        flash('Перемещение невозможно', 'info')
+        return redirect(url_for('storage.list_storages'))
+    
+    # Меняем местами
+    storages[current_idx], storages[new_idx] = storages[new_idx], storages[current_idx]
+    save_data(current_app.config['DATA_FILE'], data)
+    flash('Хранилище перемещено', 'success')
+    return redirect(url_for('storage.list_storages'))
+
 @storage_bp.route('/add', methods=['GET', 'POST'])
 def add_storage():
     if request.method == 'POST':
