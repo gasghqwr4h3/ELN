@@ -29,6 +29,13 @@
                         </summary>
                     </details>
                 </div>
+                <div style="margin-top: 4px;">
+                    <details style="cursor: pointer;">
+                        <summary style="color: #9c27b0; font-size: 0.9em; list-style: none; display: inline-block;">
+                            📋 Программа измерений <span style="font-size: 0.8em; color: #999;">(нажми)</span>
+                        </summary>
+                    </details>
+                </div>
             </td>
             
             <!-- Столбец Дата -->
@@ -102,12 +109,22 @@
                 </div>
             </td>
         </tr>
+
+        <!-- Скрытая строка с программой измерений -->
+        <tr id="program-row-{{ m.id }}" style="display: none; background: #f3e5f5;">
+            <td colspan="6" style="padding: 15px; border-top: 1px dashed #ce93d8; border-bottom: 1px solid #eee;">
+                <strong>Программа измерений:</strong>
+                <div style="margin-top: 8px; color: #444; line-height: 1.6; white-space: pre-wrap;">
+                    {{ m.measurement_program if m.measurement_program else 'Программа измерений не указана.' }}
+                </div>
+            </td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>
 
 <script>
-    // Логика открытия спойлера описания
+    // Логика открытия спойлера описания и программы измерений
     document.querySelectorAll('summary').forEach(summary => {
         summary.addEventListener('click', function(e) {
             const currentRow = this.closest('tr');
@@ -122,6 +139,21 @@
                         nextRow.style.display = 'table-row';
                     } else {
                         nextRow.style.display = 'none';
+                    }
+                }
+            } else if (text.includes('программа измерений')) {
+                e.preventDefault();
+                // Ищем строку с программой измерений (она идет после строки с описанием)
+                let programRow = currentRow.nextElementSibling;
+                while (programRow && !programRow.id.startsWith('program-row-')) {
+                    programRow = programRow.nextElementSibling;
+                }
+                
+                if (programRow && programRow.id && programRow.id.startsWith('program-row-')) {
+                    if (programRow.style.display === 'none') {
+                        programRow.style.display = 'table-row';
+                    } else {
+                        programRow.style.display = 'none';
                     }
                 }
             }
