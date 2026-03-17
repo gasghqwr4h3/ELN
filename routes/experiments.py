@@ -22,7 +22,12 @@ def rename_experiment_folders(data):
     for idx, experiment in enumerate(experiments):
         old_folder_name = experiment.get('folder_name', '')
         safe_name = transliterate(experiment.get('name', 'unnamed'))
-        new_folder_name = f"{idx + 1}_{safe_name}"
+        # Получаем дату создания или используем пустую строку если нет
+        created_at = experiment.get('_created_at', '')
+        if created_at:
+            new_folder_name = f"{idx + 1}_{safe_name}_{created_at}"
+        else:
+            new_folder_name = f"{idx + 1}_{safe_name}"
         
         if old_folder_name != new_folder_name:
             old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'experiments', old_folder_name)

@@ -22,7 +22,12 @@ def rename_measurement_folders(data):
     for idx, measurement in enumerate(measurements):
         old_folder_name = measurement.get('folder_name', '')
         safe_name = transliterate(measurement.get('name', 'unnamed'))
-        new_folder_name = f"{idx + 1}_{safe_name}"
+        # Получаем дату создания или используем пустую строку если нет
+        created_at = measurement.get('_created_at', '')
+        if created_at:
+            new_folder_name = f"{idx + 1}_{safe_name}_{created_at}"
+        else:
+            new_folder_name = f"{idx + 1}_{safe_name}"
         
         if old_folder_name != new_folder_name:
             old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', old_folder_name)

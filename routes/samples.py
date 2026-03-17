@@ -23,7 +23,12 @@ def rename_sample_folders(data):
     for idx, sample in enumerate(samples):
         old_folder_name = sample.get('folder_name', '')
         safe_name = transliterate(sample.get('name', 'unnamed'))
-        new_folder_name = f"{idx + 1}_{safe_name}"
+        # Получаем дату создания или используем пустую строку если нет
+        created_at = sample.get('_created_at', '')
+        if created_at:
+            new_folder_name = f"{idx + 1}_{safe_name}_{created_at}"
+        else:
+            new_folder_name = f"{idx + 1}_{safe_name}"
         
         if old_folder_name != new_folder_name:
             old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', old_folder_name)
