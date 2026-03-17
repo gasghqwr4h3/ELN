@@ -29,6 +29,8 @@ def list_measurements():
             m['status'] = ''
         if 'description' not in m:
             m['description'] = ''
+        if 'measurement_program' not in m:
+            m['measurement_program'] = ''
             
     return render_template('measurement_list.html', measurements=measurements_list)
 
@@ -38,6 +40,7 @@ def add_measurement():
     if request.method == 'POST':
         name = request.form.get('name')
         desc = request.form.get('description')
+        measurement_program = request.form.get('measurement_program')
         note = request.form.get('note')
         status = request.form.get('status')
         date = request.form.get('date')
@@ -62,6 +65,7 @@ def add_measurement():
             'id': new_id, 
             'name': name, 
             'description': desc, 
+            'measurement_program': measurement_program,
             'note': note,
             'status': status, 
             'date': date,
@@ -86,6 +90,7 @@ def edit_measurement(id):
         old_name = measurement['name']
         measurement['name'] = request.form.get('name')
         measurement['description'] = request.form.get('description')
+        measurement['measurement_program'] = request.form.get('measurement_program')
         measurement['note'] = request.form.get('note')
         measurement['status'] = request.form.get('status')
         measurement['date'] = request.form.get('date')

@@ -8,6 +8,9 @@
     <label>Описание</label>
     <textarea name="description" rows="5">{{ measurement.description if measurement else '' }}</textarea>
     
+    <label>Программа измерений</label>
+    <textarea name="measurement_program" rows="5">{{ measurement.measurement_program if measurement else '' }}</textarea>
+    
     <label>Заметка</label>
     <input type="text" name="note" value="{{ measurement.note if measurement else '' }}">
     
