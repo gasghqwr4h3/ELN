@@ -16,17 +16,55 @@ def get_sample_folder_path(sample):
     
     return os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', folder_name)
 
+def get_unique_folder_name(base_path, folder_name):
+    """Генерирует уникальное имя папки, добавляя суффикс _1, _2 и т.д. при конфликте."""
+    if not os.path.exists(os.path.join(base_path, folder_name)):
+        return folder_name
+    
+    # Разделяем имя на части
+    parts = folder_name.rsplit('_', 1)
+    if len(parts) == 2 and parts[1].isdigit():
+        base_name = parts[0]
+        counter = int(parts[1])
+    else:
+        base_name = folder_name
+        counter = 0
+    
+    # Ищем свободное имя
+    while True:
+        counter += 1
+        new_name = f"{base_name}_{counter}"
+        if not os.path.exists(os.path.join(base_path, new_name)):
+            return new_name
+
 def rename_sample_folders(data):
     """Переименовывает папки всех образцов в соответствии с их порядковым номером."""
     samples = data.get('samples', [])
+    upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples')
+    
+    # Сначала собираем все новые имена и проверяем конфликты
     for idx, sample in enumerate(samples):
-        old_folder_name = sample.get('folder_name', '')
         safe_name = transliterate(sample.get('name', 'unnamed'))
         new_folder_name = f"{idx + 1}_{safe_name}"
+        # Проверяем, есть ли другие образцы с таким же именем папки
+        for other_idx, other_sample in enumerate(samples):
+            if other_idx != idx:
+                other_safe_name = transliterate(other_sample.get('name', 'unnamed'))
+                other_new_folder_name = f"{other_idx + 1}_{other_safe_name}"
+                if new_folder_name == other_new_folder_name:
+                    # Конфликт имен, нужно добавить суффикс
+                    new_folder_name = get_unique_folder_name(upload_path, new_folder_name)
+                    break
+        sample['_new_folder_name'] = new_folder_name
+    
+    # Теперь переименовываем папки
+    for idx, sample in enumerate(samples):
+        old_folder_name = sample.get('folder_name', '')
+        new_folder_name = sample.get('_new_folder_name', f"{idx + 1}_{transliterate(sample.get('name', 'unnamed'))}")
         
         if old_folder_name != new_folder_name:
-            old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', old_folder_name)
-            new_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', new_folder_name)
+            old_path = os.path.join(upload_path, old_folder_name)
+            new_path = os.path.join(upload_path, new_folder_name)
             
             if os.path.exists(old_path) and old_path != new_path:
                 try:
@@ -39,6 +77,11 @@ def rename_sample_folders(data):
             else:
                 # Папка не существует, просто обновляем имя
                 sample['folder_name'] = new_folder_name
+    
+    # Удаляем временное поле
+    for sample in samples:
+        if '_new_folder_name' in sample:
+            del sample['_new_folder_name']
 
 @samples_bp.route('/')
 def list_samples():

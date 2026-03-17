@@ -15,17 +15,55 @@ def get_measurement_folder_path(measurement):
     
     return os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', folder_name)
 
+def get_unique_folder_name(base_path, folder_name):
+    """Генерирует уникальное имя папки, добавляя суффикс _1, _2 и т.д. при конфликте."""
+    if not os.path.exists(os.path.join(base_path, folder_name)):
+        return folder_name
+    
+    # Разделяем имя на части
+    parts = folder_name.rsplit('_', 1)
+    if len(parts) == 2 and parts[1].isdigit():
+        base_name = parts[0]
+        counter = int(parts[1])
+    else:
+        base_name = folder_name
+        counter = 0
+    
+    # Ищем свободное имя
+    while True:
+        counter += 1
+        new_name = f"{base_name}_{counter}"
+        if not os.path.exists(os.path.join(base_path, new_name)):
+            return new_name
+
 def rename_measurement_folders(data):
     """Переименовывает папки всех измерений в соответствии с их порядковым номером."""
     measurements = data.get('measurements', [])
+    upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements')
+    
+    # Сначала собираем все новые имена и проверяем конфликты
     for idx, measurement in enumerate(measurements):
-        old_folder_name = measurement.get('folder_name', '')
         safe_name = transliterate(measurement.get('name', 'unnamed'))
         new_folder_name = f"{idx + 1}_{safe_name}"
+        # Проверяем, есть ли другие измерения с таким же именем папки
+        for other_idx, other_measurement in enumerate(measurements):
+            if other_idx != idx:
+                other_safe_name = transliterate(other_measurement.get('name', 'unnamed'))
+                other_new_folder_name = f"{other_idx + 1}_{other_safe_name}"
+                if new_folder_name == other_new_folder_name:
+                    # Конфликт имен, нужно добавить суффикс
+                    new_folder_name = get_unique_folder_name(upload_path, new_folder_name)
+                    break
+        measurement['_new_folder_name'] = new_folder_name
+    
+    # Теперь переименовываем папки
+    for idx, measurement in enumerate(measurements):
+        old_folder_name = measurement.get('folder_name', '')
+        new_folder_name = measurement.get('_new_folder_name', f"{idx + 1}_{transliterate(measurement.get('name', 'unnamed'))}")
         
         if old_folder_name != new_folder_name:
-            old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', old_folder_name)
-            new_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', new_folder_name)
+            old_path = os.path.join(upload_path, old_folder_name)
+            new_path = os.path.join(upload_path, new_folder_name)
             
             if os.path.exists(old_path) and old_path != new_path:
                 try:
@@ -38,6 +76,11 @@ def rename_measurement_folders(data):
             else:
                 # Папка не существует, просто обновляем имя
                 measurement['folder_name'] = new_folder_name
+    
+    # Удаляем временное поле
+    for measurement in measurements:
+        if '_new_folder_name' in measurement:
+            del measurement['_new_folder_name']
 
 @measurements_bp.route('/')
 def list_measurements():
