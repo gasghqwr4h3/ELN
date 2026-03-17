@@ -12,33 +12,13 @@ def get_experiment_folder_path(experiment):
     folder_name = experiment.get('folder_name')
     if not folder_name:
         safe_name = transliterate(experiment.get('name', 'unnamed'))
-        folder_name = f"{experiment['id']}_{safe_name}"
+        timestamp = experiment.get('_created_at', '')
+        if timestamp:
+            folder_name = f"{safe_name}_{timestamp}"
+        else:
+            folder_name = f"{safe_name}"
     
     return os.path.join(current_app.config['UPLOAD_FOLDER'], 'experiments', folder_name)
-
-def rename_experiment_folders(data):
-    """Переименовывает папки всех экспериментов в соответствии с их порядковым номером."""
-    experiments = data.get('experiments', [])
-    for idx, experiment in enumerate(experiments):
-        old_folder_name = experiment.get('folder_name', '')
-        safe_name = transliterate(experiment.get('name', 'unnamed'))
-        new_folder_name = f"{idx + 1}_{safe_name}"
-        
-        if old_folder_name != new_folder_name:
-            old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'experiments', old_folder_name)
-            new_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'experiments', new_folder_name)
-            
-            if os.path.exists(old_path) and old_path != new_path:
-                try:
-                    os.rename(old_path, new_path)
-                    experiment['folder_name'] = new_folder_name
-                except Exception as e:
-                    flash(f'Не удалось переименовать папку эксперимента {experiment["name"]}: {e}', 'warning')
-            elif os.path.exists(new_path):
-                experiment['folder_name'] = new_folder_name
-            else:
-                # Папка не существует, просто обновляем имя
-                experiment['folder_name'] = new_folder_name
 
 @experiments_bp.route('/')
 def list_experiments():
@@ -74,8 +54,8 @@ def add_experiment():
         
         # Добавляем эксперимент в конец списка
         safe_name = transliterate(name)
-        # Номер папки будет равен позиции в списке + 1, с добавлением временной метки
-        folder_name = f"{len(data['experiments']) + 1}_{safe_name}_{timestamp}"
+        # Имя папки формируется как SAMPLE_NAME_CREATION_DATE
+        folder_name = f"{safe_name}_{timestamp}"
         experiment_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'experiments', folder_name)
         os.makedirs(experiment_folder, exist_ok=True)
         
@@ -113,15 +93,11 @@ def edit_experiment(id):
         return redirect(url_for('experiments.list_experiments'))
 
     if request.method == 'POST':
-        old_name = experiment['name']
         experiment['name'] = request.form.get('name')
         experiment['description'] = request.form.get('description')
         experiment['results'] = request.form.get('results')
         experiment['status'] = request.form.get('status')
         experiment['date'] = request.form.get('date')
-        
-        # Переименовываем папки всех экспериментов в соответствии с их порядком (на случай изменения имени)
-        rename_experiment_folders(data)
 
         # Загрузка новых файлов
         uploaded_files = request.files.getlist('files')
@@ -158,9 +134,6 @@ def delete_experiment(id):
                 flash(f'Не удалось удалить папку с файлами: {e}', 'error')
         
         data['experiments'] = [exp for exp in data['experiments'] if exp['id'] != id]
-        
-        # Переименовываем папки в соответствии с новым порядком после удаления
-        rename_experiment_folders(data)
         
         save_data(current_app.config['DATA_FILE'], data)
         flash('Эксперимент и его файлы удалены', 'info')
@@ -247,9 +220,6 @@ def move_experiment(id, direction):
     
     # Меняем местами
     experiments[current_idx], experiments[new_idx] = experiments[new_idx], experiments[current_idx]
-    
-    # Переименовываем папки в соответствии с новым порядком
-    rename_experiment_folders(data)
     
     save_data(current_app.config['DATA_FILE'], data)
     flash('Эксперимент перемещен', 'success')

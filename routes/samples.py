@@ -9,37 +9,16 @@ samples_bp = Blueprint('samples', __name__, template_folder='../templates')
 
 def get_sample_folder_path(sample):
     """Вычисляет полный путь к папке образца."""
-    # Используем сохраненное имя папки или генерируем новое на основе имени
     folder_name = sample.get('folder_name')
     if not folder_name:
         safe_name = transliterate(sample.get('name', 'unnamed'))
-        folder_name = f"{sample['id']}_{safe_name}"
+        timestamp = sample.get('_created_at', '')
+        if timestamp:
+            folder_name = f"{safe_name}_{timestamp}"
+        else:
+            folder_name = f"{safe_name}"
     
     return os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', folder_name)
-
-def rename_sample_folders(data):
-    """Переименовывает папки всех образцов в соответствии с их порядковым номером."""
-    samples = data.get('samples', [])
-    for idx, sample in enumerate(samples):
-        old_folder_name = sample.get('folder_name', '')
-        safe_name = transliterate(sample.get('name', 'unnamed'))
-        new_folder_name = f"{idx + 1}_{safe_name}"
-        
-        if old_folder_name != new_folder_name:
-            old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', old_folder_name)
-            new_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', new_folder_name)
-            
-            if os.path.exists(old_path) and old_path != new_path:
-                try:
-                    os.rename(old_path, new_path)
-                    sample['folder_name'] = new_folder_name
-                except Exception as e:
-                    flash(f'Не удалось переименовать папку образца {sample["name"]}: {e}', 'warning')
-            elif os.path.exists(new_path):
-                sample['folder_name'] = new_folder_name
-            else:
-                # Папка не существует, просто обновляем имя
-                sample['folder_name'] = new_folder_name
 
 @samples_bp.route('/')
 def list_samples():
@@ -76,8 +55,8 @@ def add_sample():
         
         # Добавляем образец в конец списка
         safe_name = transliterate(name)
-        # Номер папки будет равен позиции в списке + 1, с добавлением временной метки
-        folder_name = f"{len(data['samples']) + 1}_{safe_name}_{timestamp}"
+        # Имя папки формируется как SAMPLE_NAME_CREATION_DATE
+        folder_name = f"{safe_name}_{timestamp}"
         sample_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', folder_name)
         os.makedirs(sample_folder, exist_ok=True)
         
@@ -115,16 +94,12 @@ def edit_sample(id):
         return redirect(url_for('samples.list_samples'))
 
     if request.method == 'POST':
-        old_name = sample['name']
         sample['name'] = request.form.get('name')
         sample['description'] = request.form.get('description')
         sample['note'] = request.form.get('note')
         sample['status'] = request.form.get('status')
         s_id = request.form.get('storage_id')
         sample['storage_id'] = int(s_id) if s_id else None
-        
-        # Переименовываем папки всех образцов в соответствии с их порядком (на случай изменения имени)
-        rename_sample_folders(data)
 
         # Загрузка новых файлов
         uploaded_files = request.files.getlist('files')
@@ -161,9 +136,6 @@ def delete_sample(id):
                 flash(f'Не удалось удалить папку с файлами: {e}', 'error')
         
         data['samples'] = [s for s in data['samples'] if s['id'] != id]
-        
-        # Переименовываем папки в соответствии с новым порядком после удаления
-        rename_sample_folders(data)
         
         save_data(current_app.config['DATA_FILE'], data)
         flash('Образец и его файлы удалены', 'info')
@@ -251,9 +223,6 @@ def move_sample(id, direction):
     
     # Меняем местами
     samples[current_idx], samples[new_idx] = samples[new_idx], samples[current_idx]
-    
-    # Переименовываем папки в соответствии с новым порядком
-    rename_sample_folders(data)
     
     save_data(current_app.config['DATA_FILE'], data)
     flash('Образец перемещен', 'success')
