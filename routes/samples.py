@@ -207,3 +207,35 @@ def open_folder(sample_id):
         flash('Образец не найден', 'error')
         
     return redirect(url_for('samples.list_samples'))
+
+@samples_bp.route('/move/<int:id>/<direction>')
+def move_sample(id, direction):
+    """Переместить образец вверх или вниз."""
+    data = get_data(current_app.config['DATA_FILE'])
+    samples = data.get('samples', [])
+    
+    # Находим индекс текущего образца
+    current_idx = None
+    for i, s in enumerate(samples):
+        if s['id'] == id:
+            current_idx = i
+            break
+    
+    if current_idx is None:
+        flash('Образец не найден', 'error')
+        return redirect(url_for('samples.list_samples'))
+    
+    # Определяем новый индекс
+    if direction == 'up' and current_idx > 0:
+        new_idx = current_idx - 1
+    elif direction == 'down' and current_idx < len(samples) - 1:
+        new_idx = current_idx + 1
+    else:
+        flash('Перемещение невозможно', 'info')
+        return redirect(url_for('samples.list_samples'))
+    
+    # Меняем местами
+    samples[current_idx], samples[new_idx] = samples[new_idx], samples[current_idx]
+    save_data(current_app.config['DATA_FILE'], data)
+    flash('Образец перемещен', 'success')
+    return redirect(url_for('samples.list_samples'))

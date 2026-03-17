@@ -26,8 +26,11 @@
                 </p>
             </div>
             
-            <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
                 {% if storage.id != 'none' %}
+                    <!-- Кнопки перемещения -->
+                    <a href="/storage/move/{{ storage.id }}/up" class="btn" style="padding: 5px 10px; font-size: 0.9em;" title="Переместить выше">⬆️</a>
+                    <a href="/storage/move/{{ storage.id }}/down" class="btn" style="padding: 5px 10px; font-size: 0.9em;" title="Переместить ниже">⬇️</a>
                     <a href="/storage/edit/{{ storage.id }}" class="btn" style="padding: 5px 10px; font-size: 0.9em;">Ред.</a>
                     <a href="/storage/delete/{{ storage.id }}" class="btn btn-danger" style="padding: 5px 10px; font-size: 0.9em;" onclick="return confirm('Удалить хранилище? Образцы станут бездомными.')">Удалить</a>
                 {% endif %}

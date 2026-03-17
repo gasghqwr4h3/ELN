@@ -209,6 +209,38 @@ def open_folder(measurement_id):
         
     return redirect(url_for('measurements.list_measurements'))
 
+@measurements_bp.route('/move/<int:id>/<direction>')
+def move_measurement(id, direction):
+    """Переместить измерение вверх или вниз."""
+    data = get_data(current_app.config['DATA_FILE'])
+    measurements = data.get('measurements', [])
+    
+    # Находим индекс текущего измерения
+    current_idx = None
+    for i, m in enumerate(measurements):
+        if m['id'] == id:
+            current_idx = i
+            break
+    
+    if current_idx is None:
+        flash('Измерение не найдено', 'error')
+        return redirect(url_for('measurements.list_measurements'))
+    
+    # Определяем новый индекс
+    if direction == 'up' and current_idx > 0:
+        new_idx = current_idx - 1
+    elif direction == 'down' and current_idx < len(measurements) - 1:
+        new_idx = current_idx + 1
+    else:
+        flash('Перемещение невозможно', 'info')
+        return redirect(url_for('measurements.list_measurements'))
+    
+    # Меняем местами
+    measurements[current_idx], measurements[new_idx] = measurements[new_idx], measurements[current_idx]
+    save_data(current_app.config['DATA_FILE'], data)
+    flash('Измерение перемещено', 'success')
+    return redirect(url_for('measurements.list_measurements'))
+
 @measurements_bp.route('/<int:id>/status', methods=['POST'])
 def update_status(id):
     """AJAX endpoint для обновления статуса измерения."""
