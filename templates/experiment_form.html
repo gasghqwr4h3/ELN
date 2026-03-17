@@ -5,11 +5,11 @@
     <label>Название *</label>
     <input type="text" name="name" value="{{ experiment.name if experiment else '' }}" required>
     
+    <label>Дата</label>
+    <input type="text" name="date" value="{{ experiment.date if experiment and experiment.date else '' }}">
+    
     <label>Описание</label>
     <textarea name="description" rows="5">{{ experiment.description if experiment else '' }}</textarea>
-    
-    <label>Результаты</label>
-    <textarea name="results" rows="5">{{ experiment.results if experiment else '' }}</textarea>
     
     <label>Статус</label>
     <select name="status">
@@ -19,8 +19,8 @@
         <option value="Закончен" {% if experiment and experiment.status == 'Закончен' %}selected{% endif %}>✅ Закончен</option>
     </select>
     
-    <label>Дата</label>
-    <input type="text" name="date" value="{{ experiment.date if experiment and experiment.date else '' }}">
+    <label>Результаты</label>
+    <textarea name="results" rows="5">{{ experiment.results if experiment else '' }}</textarea>
     
     <label>Файлы</label>
     <input type="file" name="files" multiple>
