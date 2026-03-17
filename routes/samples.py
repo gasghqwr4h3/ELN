@@ -16,6 +16,30 @@ def get_sample_folder_path(sample):
     
     return os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', folder_name)
 
+def rename_sample_folders(data):
+    """Переименовывает папки всех образцов в соответствии с их порядковым номером."""
+    samples = data.get('samples', [])
+    for idx, sample in enumerate(samples):
+        old_folder_name = sample.get('folder_name', '')
+        safe_name = transliterate(sample.get('name', 'unnamed'))
+        new_folder_name = f"{idx + 1}_{safe_name}"
+        
+        if old_folder_name != new_folder_name:
+            old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', old_folder_name)
+            new_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', new_folder_name)
+            
+            if os.path.exists(old_path) and old_path != new_path:
+                try:
+                    os.rename(old_path, new_path)
+                    sample['folder_name'] = new_folder_name
+                except Exception as e:
+                    flash(f'Не удалось переименовать папку образца {sample["name"]}: {e}', 'warning')
+            elif os.path.exists(new_path):
+                sample['folder_name'] = new_folder_name
+            else:
+                # Папка не существует, просто обновляем имя
+                sample['folder_name'] = new_folder_name
+
 @samples_bp.route('/')
 def list_samples():
     data = get_data(current_app.config['DATA_FILE'])
@@ -46,9 +70,10 @@ def add_sample():
         
         new_id = max([s['id'] for s in data.get('samples', [])], default=0) + 1
         
-        # Создаем папку для образца
+        # Добавляем образец в конец списка
         safe_name = transliterate(name)
-        folder_name = f"{new_id}_{safe_name}"
+        # Номер папки будет равен позиции в списке + 1
+        folder_name = f"{len(data['samples']) + 1}_{safe_name}"
         sample_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', folder_name)
         os.makedirs(sample_folder, exist_ok=True)
         
@@ -93,27 +118,8 @@ def edit_sample(id):
         s_id = request.form.get('storage_id')
         sample['storage_id'] = int(s_id) if s_id else None
         
-        # Если название изменилось, переименовываем папку
-        if sample['name'] != old_name:
-            safe_name = transliterate(sample['name'])
-            new_folder_name = f"{id}_{safe_name}"
-            old_path = get_sample_folder_path(sample) # Путь до переименования (используем старое имя или старую папку)
-            
-            # Корректируем старый путь, если folder_name еще не обновлен
-            if not sample.get('folder_name') or old_name not in sample.get('folder_name', ''):
-                 old_safe = transliterate(old_name)
-                 old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', f"{id}_{old_safe}")
-
-            new_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', new_folder_name)
-            
-            if os.path.exists(old_path) and old_path != new_path:
-                try:
-                    os.rename(old_path, new_path)
-                    sample['folder_name'] = new_folder_name
-                except Exception as e:
-                    flash(f'Не удалось переименовать папку: {e}', 'warning')
-            elif os.path.exists(new_path):
-                sample['folder_name'] = new_folder_name
+        # Переименовываем папки всех образцов в соответствии с их порядком (на случай изменения имени)
+        rename_sample_folders(data)
 
         # Загрузка новых файлов
         uploaded_files = request.files.getlist('files')
@@ -150,6 +156,10 @@ def delete_sample(id):
                 flash(f'Не удалось удалить папку с файлами: {e}', 'error')
         
         data['samples'] = [s for s in data['samples'] if s['id'] != id]
+        
+        # Переименовываем папки в соответствии с новым порядком после удаления
+        rename_sample_folders(data)
+        
         save_data(current_app.config['DATA_FILE'], data)
         flash('Образец и его файлы удалены', 'info')
     
@@ -236,6 +246,10 @@ def move_sample(id, direction):
     
     # Меняем местами
     samples[current_idx], samples[new_idx] = samples[new_idx], samples[current_idx]
+    
+    # Переименовываем папки в соответствии с новым порядком
+    rename_sample_folders(data)
+    
     save_data(current_app.config['DATA_FILE'], data)
     flash('Образец перемещен', 'success')
     return redirect(url_for('samples.list_samples'))

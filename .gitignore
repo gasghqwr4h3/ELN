@@ -4,8 +4,8 @@
 __pycache__/
 
 # Dependencies
-.venv/
 venv/
+.venv/
 node_modules/
 
 # Logs and temporary files
@@ -20,22 +20,4 @@ node_modules/
 .env
 .env.local
 *.env.*
-
-# Coverage reports
-.coverage
-coverage/
-htmlcov/
-
-# Build directories
-build/
-dist/
-target/
-
-# Python cache
-.mypy_cache/
-.pytest_cache/
-
-# OS specific
-.DS_Store
-Thumbs.db
 ```
