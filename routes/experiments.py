@@ -72,16 +72,18 @@ def add_experiment():
         safe_name = transliterate(name)
         # Номер папки будет равен позиции в списке + 1
         folder_name = f"{len(data['experiments']) + 1}_{safe_name}"
-        experiment_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'experiments', folder_name)
-        os.makedirs(experiment_folder, exist_ok=True)
         
         # Обработка файлов
         files = []
         uploaded_files = request.files.getlist('files')
-        for file in uploaded_files:
-            if file and file.filename != '':
-                file.save(os.path.join(experiment_folder, file.filename))
-                files.append(file.filename)
+        if uploaded_files:
+            # Создаём папку только если есть файлы для загрузки
+            experiment_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'experiments', folder_name)
+            os.makedirs(experiment_folder, exist_ok=True)
+            for file in uploaded_files:
+                if file and file.filename != '':
+                    file.save(os.path.join(experiment_folder, file.filename))
+                    files.append(file.filename)
 
         data['experiments'].append({
             'id': new_id, 
@@ -175,6 +177,15 @@ def delete_file(experiment_id, filename):
             os.remove(file_path)
         
         experiment['files'].remove(filename)
+        
+        # Если файлов больше нет, удаляем папку
+        if not experiment['files']:
+            if os.path.exists(experiment_folder):
+                try:
+                    os.rmdir(experiment_folder)
+                except Exception as e:
+                    flash(f'Не удалось удалить пустую папку: {e}', 'warning')
+        
         save_data(current_app.config['DATA_FILE'], data)
         flash(f'Файл {filename} удален', 'info')
     

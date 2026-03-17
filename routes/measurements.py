@@ -75,16 +75,18 @@ def add_measurement():
         safe_name = transliterate(name)
         # Номер папки будет равен позиции в списке + 1
         folder_name = f"{len(data['measurements']) + 1}_{safe_name}"
-        measurement_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', folder_name)
-        os.makedirs(measurement_folder, exist_ok=True)
         
         # Обработка файлов
         files = []
         uploaded_files = request.files.getlist('files')
-        for file in uploaded_files:
-            if file and file.filename != '':
-                file.save(os.path.join(measurement_folder, file.filename))
-                files.append(file.filename)
+        if uploaded_files:
+            # Создаём папку только если есть файлы для загрузки
+            measurement_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', folder_name)
+            os.makedirs(measurement_folder, exist_ok=True)
+            for file in uploaded_files:
+                if file and file.filename != '':
+                    file.save(os.path.join(measurement_folder, file.filename))
+                    files.append(file.filename)
 
         data['measurements'].append({
             'id': new_id, 
@@ -180,6 +182,15 @@ def delete_file(measurement_id, filename):
             os.remove(file_path)
         
         measurement['files'].remove(filename)
+        
+        # Если файлов больше нет, удаляем папку
+        if not measurement['files']:
+            if os.path.exists(measurement_folder):
+                try:
+                    os.rmdir(measurement_folder)
+                except Exception as e:
+                    flash(f'Не удалось удалить пустую папку: {e}', 'warning')
+        
         save_data(current_app.config['DATA_FILE'], data)
         flash(f'Файл {filename} удален', 'info')
     

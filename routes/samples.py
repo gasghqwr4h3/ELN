@@ -74,16 +74,18 @@ def add_sample():
         safe_name = transliterate(name)
         # Номер папки будет равен позиции в списке + 1
         folder_name = f"{len(data['samples']) + 1}_{safe_name}"
-        sample_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', folder_name)
-        os.makedirs(sample_folder, exist_ok=True)
         
         # Обработка файлов
         files = []
         uploaded_files = request.files.getlist('files')
-        for file in uploaded_files:
-            if file and file.filename != '':
-                file.save(os.path.join(sample_folder, file.filename))
-                files.append(file.filename)
+        if uploaded_files:
+            # Создаём папку только если есть файлы для загрузки
+            sample_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', folder_name)
+            os.makedirs(sample_folder, exist_ok=True)
+            for file in uploaded_files:
+                if file and file.filename != '':
+                    file.save(os.path.join(sample_folder, file.filename))
+                    files.append(file.filename)
 
         data['samples'].append({
             'id': new_id, 
@@ -178,6 +180,15 @@ def delete_file(sample_id, filename):
             os.remove(file_path)
         
         sample['files'].remove(filename)
+        
+        # Если файлов больше нет, удаляем папку
+        if not sample['files']:
+            if os.path.exists(sample_folder):
+                try:
+                    os.rmdir(sample_folder)
+                except Exception as e:
+                    flash(f'Не удалось удалить пустую папку: {e}', 'warning')
+        
         save_data(current_app.config['DATA_FILE'], data)
         flash(f'Файл {filename} удален', 'info')
     
