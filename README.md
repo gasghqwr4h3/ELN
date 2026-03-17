@@ -33,10 +33,10 @@
 
 ### На Windows
 
-Запустите файл `install.bat`:
+Запустите файл `ELN.bat`:
 
 ```bat
-install.bat
+ELN.bat
 ```
 
 Скрипт автоматически:
