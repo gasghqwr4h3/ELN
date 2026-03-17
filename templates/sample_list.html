@@ -67,21 +67,7 @@
             <!-- Столбец Файлы -->
             <td style="padding: 12px;">
                 {% if s.files %}
-                    <details>
-                        <summary style="cursor: pointer; color: #d84315; font-size: 0.9em; list-style: none; display: inline-block;">
-                            📁 Файлов: {{ s.files|length }}
-                        </summary>
-                        <div style="margin-top: 5px; padding-left: 0; font-size: 0.85em;">
-                            {% for file in s.files %}
-                                <div style="margin-bottom: 3px; display: flex; align-items: center; gap: 5px;">
-                                    <a href="/samples/file/{{ s.id }}/{{ file }}" target="_blank" style="color: #555; text-decoration: none;">📄 {{ file }}</a>
-                                </div>
-                            {% endfor %}
-                            <div style="margin-top: 5px;">
-                                <a href="/samples/folder/{{ s.id }}" class="btn" style="padding: 2px 6px; font-size: 0.75em; background: #607d8b;">📂 Папка</a>
-                            </div>
-                        </div>
-                    </details>
+                    <a href="/samples/folder/{{ s.id }}" class="btn" style="padding: 4px 8px; font-size: 0.85em; background: #d84315; color: white;">📁 Файлов: {{ s.files|length }}</a>
                 {% else %}
                     <span style="color: #ccc;">-</span>
                 {% endif %}
