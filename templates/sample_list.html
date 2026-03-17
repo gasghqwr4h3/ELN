@@ -92,9 +92,7 @@
         <tr id="synthesis-row-{{ s.id }}" style="display: none; background: #fafafa;">
             <td colspan="6" style="padding: 15px; border-top: 1px dashed #ddd; border-bottom: 1px solid #eee;">
                 <strong>Описание синтеза:</strong>
-                <div style="margin-top: 8px; color: #444; line-height: 1.6; white-space: pre-wrap;">
-                    {{ s.description if s.description else 'Описание отсутствует.' }}
-                </div>
+                <div style="margin-top: 8px; color: #444; line-height: 1.6; white-space: pre-wrap;">{{ s.description if s.description else 'Описание отсутствует.' }}</div>
             </td>
         </tr>
         {% endfor %}
