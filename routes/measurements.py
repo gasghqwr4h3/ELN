@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_from_directory, jsonify
 from .helpers import get_data, save_data, transliterate
 
@@ -71,10 +72,13 @@ def add_measurement():
         
         new_id = max([m['id'] for m in data.get('measurements', [])], default=0) + 1
         
+        # Генерируем временную метку в формате DDMMYYYY_HHMMSS
+        timestamp = datetime.now().strftime('%d%m%Y_%H%M%S')
+        
         # Добавляем измерение в конец списка
         safe_name = transliterate(name)
-        # Номер папки будет равен позиции в списке + 1
-        folder_name = f"{len(data['measurements']) + 1}_{safe_name}"
+        # Номер папки будет равен позиции в списке + 1, с добавлением временной метки
+        folder_name = f"{len(data['measurements']) + 1}_{safe_name}_{timestamp}"
         measurement_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', folder_name)
         os.makedirs(measurement_folder, exist_ok=True)
         
@@ -95,7 +99,8 @@ def add_measurement():
             'status': status, 
             'date': date,
             'files': files,
-            'folder_name': folder_name
+            'folder_name': folder_name,
+            '_created_at': timestamp
         })
         save_data(current_app.config['DATA_FILE'], data)
         flash('Измерение добавлено!', 'success')

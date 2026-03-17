@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_from_directory
 from .helpers import get_data, save_data, transliterate
 
@@ -70,10 +71,13 @@ def add_sample():
         
         new_id = max([s['id'] for s in data.get('samples', [])], default=0) + 1
         
+        # Генерируем временную метку в формате DDMMYYYY_HHMMSS
+        timestamp = datetime.now().strftime('%d%m%Y_%H%M%S')
+        
         # Добавляем образец в конец списка
         safe_name = transliterate(name)
-        # Номер папки будет равен позиции в списке + 1
-        folder_name = f"{len(data['samples']) + 1}_{safe_name}"
+        # Номер папки будет равен позиции в списке + 1, с добавлением временной метки
+        folder_name = f"{len(data['samples']) + 1}_{safe_name}_{timestamp}"
         sample_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', folder_name)
         os.makedirs(sample_folder, exist_ok=True)
         
@@ -93,7 +97,8 @@ def add_sample():
             'status': status,
             'storage_id': storage_id, 
             'files': files,
-            'folder_name': folder_name
+            'folder_name': folder_name,
+            '_created_at': timestamp
         })
         save_data(current_app.config['DATA_FILE'], data)
         flash('Образец добавлен!', 'success')

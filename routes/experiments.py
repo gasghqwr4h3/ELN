@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_from_directory, jsonify
 from .helpers import get_data, save_data, transliterate
 
@@ -68,10 +69,13 @@ def add_experiment():
         
         new_id = max([exp['id'] for exp in data.get('experiments', [])], default=0) + 1
         
+        # Генерируем временную метку в формате DDMMYYYY_HHMMSS
+        timestamp = datetime.now().strftime('%d%m%Y_%H%M%S')
+        
         # Добавляем эксперимент в конец списка
         safe_name = transliterate(name)
-        # Номер папки будет равен позиции в списке + 1
-        folder_name = f"{len(data['experiments']) + 1}_{safe_name}"
+        # Номер папки будет равен позиции в списке + 1, с добавлением временной метки
+        folder_name = f"{len(data['experiments']) + 1}_{safe_name}_{timestamp}"
         experiment_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'experiments', folder_name)
         os.makedirs(experiment_folder, exist_ok=True)
         
@@ -91,7 +95,8 @@ def add_experiment():
             'status': status, 
             'date': date,
             'files': files,
-            'folder_name': folder_name
+            'folder_name': folder_name,
+            '_created_at': timestamp
         })
         save_data(current_app.config['DATA_FILE'], data)
         flash('Эксперимент добавлен!', 'success')
