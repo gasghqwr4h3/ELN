@@ -33,3 +33,7 @@ htmlcov/
 .mypy_cache/
 .pytest_cache/
 ```
+
+# Secret data
+data/
+uploads/
