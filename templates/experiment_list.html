@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h2 style="margin: 0;">Эксперименты</h2>
+    <a href="/experiments/add" class="btn btn-success">Добавить эксперимент</a>
+</div>
+
+<table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <thead>
+        <tr style="background: #f8f9fa; text-align: left; border-bottom: 2px solid #dee2e6;">
+            <th style="padding: 12px;">№</th>
+            <th style="padding: 12px;">Название / Описание</th>
+            <th style="padding: 12px;">Дата</th>
+            <th style="padding: 12px;">Статус</th>
+            <th style="padding: 12px;">Результаты</th>
+            <th style="padding: 12px;">Файлы</th>
+            <th style="padding: 12px; text-align: right;">Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for exp in experiments %}
+        <!-- Основная строка эксперимента -->
+        <tr style="border-bottom: 1px solid #eee; vertical-align: top;">
+            <td style="padding: 12px; font-weight: bold; color: #666; white-space: nowrap;">
+                {{ loop.index }}
+                <a href="/experiments/move/{{ exp.id }}/up" class="btn" style="padding: 4px 8px; font-size: 0.85em; margin-left: 5px;" title="Переместить выше">⬆️</a>
+                <a href="/experiments/move/{{ exp.id }}/down" class="btn" style="padding: 4px 8px; font-size: 0.85em;" title="Переместить ниже">⬇️</a>
+            </td>
+            <td style="padding: 12px;">
+                <div style="font-weight: bold; font-size: 1.05em; color: #333;">{{ exp.name }}</div>
+                <div style="margin-top: 4px;">
+                    <details style="cursor: pointer;">
+                        <summary style="color: #007bff; font-size: 0.9em; list-style: none; display: inline-block;">
+                            📝 Описание
+                        </summary>
+                    </details>
+                </div>
+            </td>
+            
+            <!-- Столбец Дата -->
+            <td style="padding: 12px;">
+                {{ exp.date if exp.date else '-' }}
+            </td>
+
+            <!-- Столбец Статус (переключатель) -->
+            <td style="padding: 12px;">
+                <select onchange="updateExperimentStatus({{ exp.id }}, this.value)" style="padding: 6px 10px; border-radius: 4px; border: 1px solid #ddd; font-size: 0.9em; cursor: pointer;
+                    {% if exp.status == 'Планируется' %}background: #fff3e0; color: #f57c00;
+                    {% elif exp.status == 'Выполняется' %}background: #e3f2fd; color: #1976d2;
+                    {% elif exp.status == 'Закончен' %}background: #e8f5e9; color: #2e7d32;
+                    {% else %}background: #f5f5f5; color: #666;{% endif %}">
+                    <option value="" {% if not exp.status %}selected{% endif %}>— Не указано —</option>
+                    <option value="Планируется" {% if exp.status == 'Планируется' %}selected{% endif %}>📅 Планируется</option>
+                    <option value="Выполняется" {% if exp.status == 'Выполняется' %}selected{% endif %}>⏳ Выполняется</option>
+                    <option value="Закончен" {% if exp.status == 'Закончен' %}selected{% endif %}>✅ Закончен</option>
+                </select>
+            </td>
+
+            <!-- Столбец Результаты -->
+            <td style="padding: 12px;">
+                {% if exp.results %}
+                    <span style="background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; font-weight: 500; display: inline-block;">
+                        ✓ Есть результаты
+                    </span>
+                {% else %}
+                    <span style="color: #ccc;">-</span>
+                {% endif %}
+            </td>
+
+            <!-- Столбец Файлы -->
+            <td style="padding: 12px;">
+                {% if exp.files %}
+                    <details>
+                        <summary style="cursor: pointer; color: #d84315; font-size: 0.9em; list-style: none; display: inline-block;">
+                            📁 Файлов: {{ exp.files|length }}
+                        </summary>
+                        <div style="margin-top: 5px; padding-left: 0; font-size: 0.85em;">
+                            {% for file in exp.files %}
+                                <div style="margin-bottom: 3px; display: flex; align-items: center; gap: 5px;">
+                                    <a href="/experiments/file/{{ exp.id }}/{{ file }}" target="_blank" style="color: #555; text-decoration: none;">📄 {{ file }}</a>
+                                </div>
+                            {% endfor %}
+                            <div style="margin-top: 5px;">
+                                <a href="/experiments/folder/{{ exp.id }}" class="btn" style="padding: 2px 6px; font-size: 0.75em; background: #607d8b;">📂 Папка</a>
+                            </div>
+                        </div>
+                    </details>
+                {% else %}
+                    <span style="color: #ccc;">-</span>
+                {% endif %}
+            </td>
+
+            <!-- Столбец Действия -->
+            <td style="padding: 12px; text-align: right; white-space: nowrap;">
+                <a href="/experiments/edit/{{ exp.id }}" class="btn" style="padding: 4px 8px; font-size: 0.85em;">Ред.</a>
+                <a href="/experiments/delete/{{ exp.id }}" class="btn btn-danger" style="padding: 4px 8px; font-size: 0.85em;" onclick="return confirm('Удалить эксперимент и все файлы?')">Удалить</a>
+            </td>
+        </tr>
+
+        <!-- Скрытая строка с полным описанием -->
+        <tr id="description-row-{{ exp.id }}" style="display: none; background: #e3f2fd;">
+            <td colspan="6" style="padding: 15px; border-top: 1px dashed #90caf9; border-bottom: 1px solid #eee;">
+                <strong style="color: #1565c0;">Описание:</strong>
+                <div style="margin-top: 8px; color: #444; line-height: 1.6; white-space: pre-wrap;">{{ exp.description if exp.description else 'Описание отсутствует.' }}</div>
+            </td>
+        </tr>
+
+        <!-- Скрытая строка с результатами -->
+        <tr id="results-row-{{ exp.id }}" style="display: none; background: #f3e5f5;">
+            <td colspan="6" style="padding: 15px; border-top: 1px dashed #ce93d8; border-bottom: 1px solid #eee;">
+                <strong>Результаты:</strong>
+                <div style="margin-top: 8px; color: #444; line-height: 1.6; white-space: pre-wrap;">{{ exp.results if exp.results else 'Результаты не указаны.' }}</div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    // Логика открытия спойлера описания и результатов
+    document.querySelectorAll('summary').forEach(summary => {
+        summary.addEventListener('click', function(e) {
+            const currentRow = this.closest('tr');
+            const text = this.innerText.toLowerCase();
+            
+            if (text.includes('описание')) {
+                e.preventDefault();
+                const nextRow = currentRow.nextElementSibling;
+                
+                if (nextRow && nextRow.id && nextRow.id.startsWith('description-row-')) {
+                    if (nextRow.style.display === 'none') {
+                        nextRow.style.display = 'table-row';
+                    } else {
+                        nextRow.style.display = 'none';
+                    }
+                }
+            } else if (text.includes('результаты')) {
+                e.preventDefault();
+                // Ищем строку с результатами (она идет после строки с описанием)
+                let resultsRow = currentRow.nextElementSibling;
+                while (resultsRow && !resultsRow.id.startsWith('results-row-')) {
+                    resultsRow = resultsRow.nextElementSibling;
+                }
+                
+                if (resultsRow && resultsRow.id && resultsRow.id.startsWith('results-row-')) {
+                    if (resultsRow.style.display === 'none') {
+                        resultsRow.style.display = 'table-row';
+                    } else {
+                        resultsRow.style.display = 'none';
+                    }
+                }
+            }
+        });
+    });
+
+    // Функция обновления статуса эксперимента
+    function updateExperimentStatus(id, status) {
+        fetch('/experiments/' + id + '/status', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({status: status})
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Ошибка при обновлении статуса');
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('Ошибка при обновлении статуса');
+        });
+    }
+</script>
+{% endblock %}
