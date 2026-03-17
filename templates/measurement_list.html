@@ -9,6 +9,7 @@
     <thead>
         <tr style="background: #f8f9fa; text-align: left; border-bottom: 2px solid #dee2e6;">
             <th style="padding: 12px;">Название / Описание</th>
+            <th style="padding: 12px;">Дата</th>
             <th style="padding: 12px;">Заметка</th>
             <th style="padding: 12px;">Статус измерения</th>
             <th style="padding: 12px;">Файлы</th>
@@ -30,6 +31,11 @@
                 </div>
             </td>
             
+            <!-- Столбец Дата -->
+            <td style="padding: 12px;">
+                {{ m.date if m.date else '-' }}
+            </td>
+
             <!-- Столбец Заметка -->
             <td style="padding: 12px;">
                 {% if m.note %}
@@ -89,7 +95,7 @@
 
         <!-- Скрытая строка с полным описанием -->
         <tr id="description-row-{{ m.id }}" style="display: none; background: #fafafa;">
-            <td colspan="5" style="padding: 15px; border-top: 1px dashed #ddd; border-bottom: 1px solid #eee;">
+            <td colspan="6" style="padding: 15px; border-top: 1px dashed #ddd; border-bottom: 1px solid #eee;">
                 <strong>Описание:</strong>
                 <div style="margin-top: 8px; color: #444; line-height: 1.6; white-space: pre-wrap;">
                     {{ m.description if m.description else 'Описание отсутствует.' }}

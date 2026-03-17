@@ -13,7 +13,7 @@ def get_measurement_folder_path(measurement):
         safe_name = transliterate(measurement.get('name', 'unnamed'))
         folder_name = f"{measurement['id']}_{safe_name}"
     
-    return os.path.join(current_app.config['UPLOAD_FOLDER'], folder_name)
+    return os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', folder_name)
 
 @measurements_bp.route('/')
 def list_measurements():
@@ -40,13 +40,14 @@ def add_measurement():
         desc = request.form.get('description')
         note = request.form.get('note')
         status = request.form.get('status')
+        date = request.form.get('date')
         
         new_id = max([m['id'] for m in data.get('measurements', [])], default=0) + 1
         
         # Создаем папку для измерения
         safe_name = transliterate(name)
         folder_name = f"{new_id}_{safe_name}"
-        measurement_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], folder_name)
+        measurement_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', folder_name)
         os.makedirs(measurement_folder, exist_ok=True)
         
         # Обработка файлов
@@ -63,6 +64,7 @@ def add_measurement():
             'description': desc, 
             'note': note,
             'status': status, 
+            'date': date,
             'files': files,
             'folder_name': folder_name
         })
@@ -86,6 +88,7 @@ def edit_measurement(id):
         measurement['description'] = request.form.get('description')
         measurement['note'] = request.form.get('note')
         measurement['status'] = request.form.get('status')
+        measurement['date'] = request.form.get('date')
         
         # Если название изменилось, переименовываем папку
         if measurement['name'] != old_name:
@@ -96,9 +99,9 @@ def edit_measurement(id):
             # Корректируем старый путь, если folder_name еще не обновлен
             if not measurement.get('folder_name') or old_name not in measurement.get('folder_name', ''):
                  old_safe = transliterate(old_name)
-                 old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], f"{id}_{old_safe}")
+                 old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', f"{id}_{old_safe}")
 
-            new_path = os.path.join(current_app.config['UPLOAD_FOLDER'], new_folder_name)
+            new_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', new_folder_name)
             
             if os.path.exists(old_path) and old_path != new_path:
                 try:

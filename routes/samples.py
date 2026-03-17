@@ -14,7 +14,7 @@ def get_sample_folder_path(sample):
         safe_name = transliterate(sample.get('name', 'unnamed'))
         folder_name = f"{sample['id']}_{safe_name}"
     
-    return os.path.join(current_app.config['UPLOAD_FOLDER'], folder_name)
+    return os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', folder_name)
 
 @samples_bp.route('/')
 def list_samples():
@@ -49,7 +49,7 @@ def add_sample():
         # Создаем папку для образца
         safe_name = transliterate(name)
         folder_name = f"{new_id}_{safe_name}"
-        sample_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], folder_name)
+        sample_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', folder_name)
         os.makedirs(sample_folder, exist_ok=True)
         
         # Обработка файлов
@@ -102,9 +102,9 @@ def edit_sample(id):
             # Корректируем старый путь, если folder_name еще не обновлен
             if not sample.get('folder_name') or old_name not in sample.get('folder_name', ''):
                  old_safe = transliterate(old_name)
-                 old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], f"{id}_{old_safe}")
+                 old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', f"{id}_{old_safe}")
 
-            new_path = os.path.join(current_app.config['UPLOAD_FOLDER'], new_folder_name)
+            new_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', new_folder_name)
             
             if os.path.exists(old_path) and old_path != new_path:
                 try:
