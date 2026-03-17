@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{% if experiment %}Редактировать эксперимент{% else %}Новый эксперимент{% endif %}</h2>
+<form method="POST" enctype="multipart/form-data">
+    <label>Название *</label>
+    <input type="text" name="name" value="{{ experiment.name if experiment else '' }}" required>
+    
+    <label>Описание</label>
+    <textarea name="description" rows="5">{{ experiment.description if experiment else '' }}</textarea>
+    
+    <label>Результаты</label>
+    <textarea name="results" rows="5">{{ experiment.results if experiment else '' }}</textarea>
+    
+    <label>Статус</label>
+    <select name="status">
+        <option value="">— Не указано —</option>
+        <option value="Планируется" {% if experiment and experiment.status == 'Планируется' %}selected{% endif %}>📅 Планируется</option>
+        <option value="Выполняется" {% if experiment and experiment.status == 'Выполняется' %}selected{% endif %}>⏳ Выполняется</option>
+        <option value="Закончен" {% if experiment and experiment.status == 'Закончен' %}selected{% endif %}>✅ Закончен</option>
+    </select>
+    
+    <label>Дата</label>
+    <input type="text" name="date" value="{{ experiment.date if experiment and experiment.date else '' }}">
+    
+    <label>Файлы</label>
+    <input type="file" name="files" multiple>
+    
+    {% if experiment and experiment.files %}
+    <div style="margin-top: 15px;">
+        <strong>Текущие файлы:</strong>
+        <ul style="list-style: none; padding: 0; margin-top: 10px;">
+            {% for file in experiment.files %}
+            <li style="padding: 8px; background: #f8f9fa; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+                <span>📄 {{ file }}</span>
+                <a href="/experiments/delete_file/{{ experiment.id }}/{{ file }}" class="btn btn-danger btn-sm" onclick="return confirm('Удалить файл?')">Удалить</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    
+    <div style="margin-top: 20px;">
+        <button type="submit" class="btn btn-success">{% if experiment %}Сохранить{% else %}Создать{% endif %}</button>
+        <a href="/experiments" class="btn">Отмена</a>
+    </div>
+</form>
+{% endblock %}

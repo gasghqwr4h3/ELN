@@ -7,7 +7,8 @@ def get_data(file_path):
         return {
             'storages': [], 
             'samples': [],
-            'measurements': []
+            'measurements': [],
+            'experiments': []
         }
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -16,12 +17,14 @@ def get_data(file_path):
             if 'storages' not in data: data['storages'] = []
             if 'samples' not in data: data['samples'] = []
             if 'measurements' not in data: data['measurements'] = []
+            if 'experiments' not in data: data['experiments'] = []
             return data
     except Exception:
         return {
             'storages': [], 
             'samples': [],
-            'measurements': []
+            'measurements': [],
+            'experiments': []
         }
 
 def save_data(file_path, data):
