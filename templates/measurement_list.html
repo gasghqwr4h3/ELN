@@ -8,6 +8,7 @@
 <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
     <thead>
         <tr style="background: #f8f9fa; text-align: left; border-bottom: 2px solid #dee2e6;">
+            <th style="padding: 12px;">№</th>
             <th style="padding: 12px;">Название / Описание</th>
             <th style="padding: 12px;">Дата</th>
             <th style="padding: 12px;">Анализ/Оборудование</th>
@@ -20,6 +21,7 @@
         {% for m in measurements %}
         <!-- Основная строка измерения -->
         <tr style="border-bottom: 1px solid #eee; vertical-align: top;">
+            <td style="padding: 12px; font-weight: bold; color: #666;">{{ loop.index }}</td>
             <td style="padding: 12px;">
                 <div style="font-weight: bold; font-size: 1.05em; color: #333;">{{ m.name }}</div>
                 <div style="margin-top: 4px;">

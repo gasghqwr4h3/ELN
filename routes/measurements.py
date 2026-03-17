@@ -15,6 +15,30 @@ def get_measurement_folder_path(measurement):
     
     return os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', folder_name)
 
+def rename_measurement_folders(data):
+    """Переименовывает папки всех измерений в соответствии с их порядковым номером."""
+    measurements = data.get('measurements', [])
+    for idx, measurement in enumerate(measurements):
+        old_folder_name = measurement.get('folder_name', '')
+        safe_name = transliterate(measurement.get('name', 'unnamed'))
+        new_folder_name = f"{idx + 1}_{safe_name}"
+        
+        if old_folder_name != new_folder_name:
+            old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', old_folder_name)
+            new_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', new_folder_name)
+            
+            if os.path.exists(old_path) and old_path != new_path:
+                try:
+                    os.rename(old_path, new_path)
+                    measurement['folder_name'] = new_folder_name
+                except Exception as e:
+                    flash(f'Не удалось переименовать папку измерения {measurement["name"]}: {e}', 'warning')
+            elif os.path.exists(new_path):
+                measurement['folder_name'] = new_folder_name
+            else:
+                # Папка не существует, просто обновляем имя
+                measurement['folder_name'] = new_folder_name
+
 @measurements_bp.route('/')
 def list_measurements():
     data = get_data(current_app.config['DATA_FILE'])
@@ -47,9 +71,10 @@ def add_measurement():
         
         new_id = max([m['id'] for m in data.get('measurements', [])], default=0) + 1
         
-        # Создаем папку для измерения
+        # Добавляем измерение в конец списка
         safe_name = transliterate(name)
-        folder_name = f"{new_id}_{safe_name}"
+        # Номер папки будет равен позиции в списке + 1
+        folder_name = f"{len(data['measurements']) + 1}_{safe_name}"
         measurement_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', folder_name)
         os.makedirs(measurement_folder, exist_ok=True)
         
@@ -95,27 +120,8 @@ def edit_measurement(id):
         measurement['status'] = request.form.get('status')
         measurement['date'] = request.form.get('date')
         
-        # Если название изменилось, переименовываем папку
-        if measurement['name'] != old_name:
-            safe_name = transliterate(measurement['name'])
-            new_folder_name = f"{id}_{safe_name}"
-            old_path = get_measurement_folder_path(measurement)
-            
-            # Корректируем старый путь, если folder_name еще не обновлен
-            if not measurement.get('folder_name') or old_name not in measurement.get('folder_name', ''):
-                 old_safe = transliterate(old_name)
-                 old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', f"{id}_{old_safe}")
-
-            new_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', new_folder_name)
-            
-            if os.path.exists(old_path) and old_path != new_path:
-                try:
-                    os.rename(old_path, new_path)
-                    measurement['folder_name'] = new_folder_name
-                except Exception as e:
-                    flash(f'Не удалось переименовать папку: {e}', 'warning')
-            elif os.path.exists(new_path):
-                measurement['folder_name'] = new_folder_name
+        # Переименовываем папки всех измерений в соответствии с их порядком (на случай изменения имени)
+        rename_measurement_folders(data)
 
         # Загрузка новых файлов
         uploaded_files = request.files.getlist('files')
@@ -152,6 +158,10 @@ def delete_measurement(id):
                 flash(f'Не удалось удалить папку с файлами: {e}', 'error')
         
         data['measurements'] = [m for m in data['measurements'] if m['id'] != id]
+        
+        # Переименовываем папки в соответствии с новым порядком после удаления
+        rename_measurement_folders(data)
+        
         save_data(current_app.config['DATA_FILE'], data)
         flash('Измерение и его файлы удалены', 'info')
     
@@ -237,6 +247,10 @@ def move_measurement(id, direction):
     
     # Меняем местами
     measurements[current_idx], measurements[new_idx] = measurements[new_idx], measurements[current_idx]
+    
+    # Переименовываем папки в соответствии с новым порядком
+    rename_measurement_folders(data)
+    
     save_data(current_app.config['DATA_FILE'], data)
     flash('Измерение перемещено', 'success')
     return redirect(url_for('measurements.list_measurements'))
