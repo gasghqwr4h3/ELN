@@ -21,7 +21,11 @@
         {% for s in samples %}
         <!-- Основная строка образца -->
         <tr style="border-bottom: 1px solid #eee; vertical-align: top;">
-            <td style="padding: 12px; font-weight: bold; color: #666;">{{ loop.index }}</td>
+            <td style="padding: 12px; font-weight: bold; color: #666;">
+                {{ loop.index }}
+                <a href="/samples/move/{{ s.id }}/up" class="btn" style="padding: 4px 8px; font-size: 0.85em; margin-left: 5px;" title="Переместить выше">⬆️</a>
+                <a href="/samples/move/{{ s.id }}/down" class="btn" style="padding: 4px 8px; font-size: 0.85em;" title="Переместить ниже">⬇️</a>
+            </td>
             <td style="padding: 12px;">
                 <div style="font-weight: bold; font-size: 1.05em; color: #333;">{{ s.name }}</div>
                 <div style="margin-top: 4px;">
@@ -85,8 +89,6 @@
 
             <!-- Столбец Действия -->
             <td style="padding: 12px; text-align: right;">
-                <a href="/samples/move/{{ s.id }}/up" class="btn" style="padding: 4px 8px; font-size: 0.85em;" title="Переместить выше">⬆️</a>
-                <a href="/samples/move/{{ s.id }}/down" class="btn" style="padding: 4px 8px; font-size: 0.85em;" title="Переместить ниже">⬇️</a>
                 <a href="/samples/edit/{{ s.id }}" class="btn" style="padding: 4px 8px; font-size: 0.85em;">Ред.</a>
                 <a href="/samples/delete/{{ s.id }}" class="btn btn-danger" style="padding: 4px 8px; font-size: 0.85em;" onclick="return confirm('Удалить образец и все файлы?')">Удалить</a>
             </td>
