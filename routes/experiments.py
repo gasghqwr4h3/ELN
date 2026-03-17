@@ -15,13 +15,71 @@ def get_experiment_folder_path(experiment):
     
     return os.path.join(current_app.config['UPLOAD_FOLDER'], 'experiments', folder_name)
 
+def get_unique_experiment_folder_name(safe_name, experiments_list, current_id=None):
+    """Генерирует уникальное имя папки для эксперимента, добавляя индекс при совпадении имен.
+    
+    Args:
+        safe_name: Транслитерированное имя эксперимента
+        experiments_list: Список всех экспериментов
+        current_id: ID текущего эксперимента (для исключения при редактировании)
+    
+    Returns:
+        Уникальное имя папки в формате {index}_{safe_name} или {index}_{safe_name}_{dup_index}
+    """
+    # Считаем, сколько экспериментов с таким именем уже существует
+    dup_count = 0
+    for exp in experiments_list:
+        if current_id and exp['id'] == current_id:
+            continue
+        folder_name = exp.get('folder_name', '')
+        if folder_name:
+            # Извлекаем базовое имя из формата {index}_{name} или {index}_{name}_{dup_index}
+            parts = folder_name.split('_', 1)
+            if len(parts) > 1:
+                base_name = parts[1]
+                # Проверяем, совпадает ли базовое имя (без возможного суффикса _N)
+                base_parts = base_name.rsplit('_', 1)
+                if len(base_parts) == 2 and base_parts[1].isdigit():
+                    check_name = base_parts[0]
+                else:
+                    check_name = base_name
+                if check_name == safe_name:
+                    dup_count += 1
+    
+    # Находим позицию для нового эксперимента
+    next_index = len(experiments_list) + 1 if not current_id else max([i for i, s in enumerate(experiments_list) if s['id'] != current_id], default=-1) + 2
+    
+    # Если есть дубликаты, добавляем индекс
+    if dup_count > 0:
+        return f"{next_index}_{safe_name}_{dup_count}"
+    else:
+        return f"{next_index}_{safe_name}"
+
 def rename_experiment_folders(data):
     """Переименовывает папки всех экспериментов в соответствии с их порядковым номером."""
     experiments = data.get('experiments', [])
+    # Сначала собираем статистику по именам
+    name_counts = {}
+    for exp in experiments:
+        safe_name = transliterate(exp.get('name', 'unnamed'))
+        name_counts[safe_name] = name_counts.get(safe_name, 0) + 1
+    
     for idx, experiment in enumerate(experiments):
         old_folder_name = experiment.get('folder_name', '')
         safe_name = transliterate(experiment.get('name', 'unnamed'))
-        new_folder_name = f"{idx + 1}_{safe_name}"
+        
+        # Если такое имя не единственное, добавляем индекс дубликата
+        if name_counts.get(safe_name, 0) > 1:
+            # Считаем, какой по счету этот эксперимент с таким именем
+            dup_index = 0
+            for i, e in enumerate(experiments):
+                if transliterate(e.get('name', 'unnamed')) == safe_name:
+                    dup_index += 1
+                    if i == idx:
+                        break
+            new_folder_name = f"{idx + 1}_{safe_name}_{dup_index}"
+        else:
+            new_folder_name = f"{idx + 1}_{safe_name}"
         
         if old_folder_name != new_folder_name:
             old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'experiments', old_folder_name)
@@ -70,8 +128,8 @@ def add_experiment():
         
         # Добавляем эксперимент в конец списка
         safe_name = transliterate(name)
-        # Номер папки будет равен позиции в списке + 1
-        folder_name = f"{len(data['experiments']) + 1}_{safe_name}"
+        # Генерируем уникальное имя папки с учетом возможных дубликатов
+        folder_name = get_unique_experiment_folder_name(safe_name, data['experiments'])
         experiment_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'experiments', folder_name)
         os.makedirs(experiment_folder, exist_ok=True)
         

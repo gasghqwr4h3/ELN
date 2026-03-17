@@ -15,13 +15,71 @@ def get_measurement_folder_path(measurement):
     
     return os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', folder_name)
 
+def get_unique_measurement_folder_name(safe_name, measurements_list, current_id=None):
+    """Генерирует уникальное имя папки для измерения, добавляя индекс при совпадении имен.
+    
+    Args:
+        safe_name: Транслитерированное имя измерения
+        measurements_list: Список всех измерений
+        current_id: ID текущего измерения (для исключения при редактировании)
+    
+    Returns:
+        Уникальное имя папки в формате {index}_{safe_name} или {index}_{safe_name}_{dup_index}
+    """
+    # Считаем, сколько измерений с таким именем уже существует
+    dup_count = 0
+    for m in measurements_list:
+        if current_id and m['id'] == current_id:
+            continue
+        folder_name = m.get('folder_name', '')
+        if folder_name:
+            # Извлекаем базовое имя из формата {index}_{name} или {index}_{name}_{dup_index}
+            parts = folder_name.split('_', 1)
+            if len(parts) > 1:
+                base_name = parts[1]
+                # Проверяем, совпадает ли базовое имя (без возможного суффикса _N)
+                base_parts = base_name.rsplit('_', 1)
+                if len(base_parts) == 2 and base_parts[1].isdigit():
+                    check_name = base_parts[0]
+                else:
+                    check_name = base_name
+                if check_name == safe_name:
+                    dup_count += 1
+    
+    # Находим позицию для нового измерения
+    next_index = len(measurements_list) + 1 if not current_id else max([i for i, s in enumerate(measurements_list) if s['id'] != current_id], default=-1) + 2
+    
+    # Если есть дубликаты, добавляем индекс
+    if dup_count > 0:
+        return f"{next_index}_{safe_name}_{dup_count}"
+    else:
+        return f"{next_index}_{safe_name}"
+
 def rename_measurement_folders(data):
     """Переименовывает папки всех измерений в соответствии с их порядковым номером."""
     measurements = data.get('measurements', [])
+    # Сначала собираем статистику по именам
+    name_counts = {}
+    for m in measurements:
+        safe_name = transliterate(m.get('name', 'unnamed'))
+        name_counts[safe_name] = name_counts.get(safe_name, 0) + 1
+    
     for idx, measurement in enumerate(measurements):
         old_folder_name = measurement.get('folder_name', '')
         safe_name = transliterate(measurement.get('name', 'unnamed'))
-        new_folder_name = f"{idx + 1}_{safe_name}"
+        
+        # Если такое имя не единственное, добавляем индекс дубликата
+        if name_counts.get(safe_name, 0) > 1:
+            # Считаем, какой по счету это измерение с таким именем
+            dup_index = 0
+            for i, meas in enumerate(measurements):
+                if transliterate(meas.get('name', 'unnamed')) == safe_name:
+                    dup_index += 1
+                    if i == idx:
+                        break
+            new_folder_name = f"{idx + 1}_{safe_name}_{dup_index}"
+        else:
+            new_folder_name = f"{idx + 1}_{safe_name}"
         
         if old_folder_name != new_folder_name:
             old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', old_folder_name)
@@ -73,8 +131,8 @@ def add_measurement():
         
         # Добавляем измерение в конец списка
         safe_name = transliterate(name)
-        # Номер папки будет равен позиции в списке + 1
-        folder_name = f"{len(data['measurements']) + 1}_{safe_name}"
+        # Генерируем уникальное имя папки с учетом возможных дубликатов
+        folder_name = get_unique_measurement_folder_name(safe_name, data['measurements'])
         measurement_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'measurements', folder_name)
         os.makedirs(measurement_folder, exist_ok=True)
         

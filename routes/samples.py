@@ -16,13 +16,71 @@ def get_sample_folder_path(sample):
     
     return os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', folder_name)
 
+def get_unique_sample_folder_name(safe_name, samples_list, current_id=None):
+    """Генерирует уникальное имя папки для образца, добавляя индекс при совпадении имен.
+    
+    Args:
+        safe_name: Транслитерированное имя образца
+        samples_list: Список всех образцов
+        current_id: ID текущего образца (для исключения при редактировании)
+    
+    Returns:
+        Уникальное имя папки в формате {index}_{safe_name} или {index}_{safe_name}_{dup_index}
+    """
+    # Считаем, сколько образцов с таким именем уже существует
+    dup_count = 0
+    for sample in samples_list:
+        if current_id and sample['id'] == current_id:
+            continue
+        folder_name = sample.get('folder_name', '')
+        if folder_name:
+            # Извлекаем базовое имя из формата {index}_{name} или {index}_{name}_{dup_index}
+            parts = folder_name.split('_', 1)
+            if len(parts) > 1:
+                base_name = parts[1]
+                # Проверяем, совпадает ли базовое имя (без возможного суффикса _N)
+                base_parts = base_name.rsplit('_', 1)
+                if len(base_parts) == 2 and base_parts[1].isdigit():
+                    check_name = base_parts[0]
+                else:
+                    check_name = base_name
+                if check_name == safe_name:
+                    dup_count += 1
+    
+    # Находим позицию для нового образца
+    next_index = len(samples_list) + 1 if not current_id else max([i for i, s in enumerate(samples_list) if s['id'] != current_id], default=-1) + 2
+    
+    # Если есть дубликаты, добавляем индекс
+    if dup_count > 0:
+        return f"{next_index}_{safe_name}_{dup_count}"
+    else:
+        return f"{next_index}_{safe_name}"
+
 def rename_sample_folders(data):
     """Переименовывает папки всех образцов в соответствии с их порядковым номером."""
     samples = data.get('samples', [])
+    # Сначала собираем статистику по именам
+    name_counts = {}
+    for sample in samples:
+        safe_name = transliterate(sample.get('name', 'unnamed'))
+        name_counts[safe_name] = name_counts.get(safe_name, 0) + 1
+    
     for idx, sample in enumerate(samples):
         old_folder_name = sample.get('folder_name', '')
         safe_name = transliterate(sample.get('name', 'unnamed'))
-        new_folder_name = f"{idx + 1}_{safe_name}"
+        
+        # Если такое имя не единственное, добавляем индекс дубликата
+        if name_counts.get(safe_name, 0) > 1:
+            # Считаем, какой по счету этот образец с таким именем
+            dup_index = 0
+            for i, s in enumerate(samples):
+                if transliterate(s.get('name', 'unnamed')) == safe_name:
+                    dup_index += 1
+                    if i == idx:
+                        break
+            new_folder_name = f"{idx + 1}_{safe_name}_{dup_index}"
+        else:
+            new_folder_name = f"{idx + 1}_{safe_name}"
         
         if old_folder_name != new_folder_name:
             old_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', old_folder_name)
@@ -72,8 +130,8 @@ def add_sample():
         
         # Добавляем образец в конец списка
         safe_name = transliterate(name)
-        # Номер папки будет равен позиции в списке + 1
-        folder_name = f"{len(data['samples']) + 1}_{safe_name}"
+        # Генерируем уникальное имя папки с учетом возможных дубликатов
+        folder_name = get_unique_sample_folder_name(safe_name, data['samples'])
         sample_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'samples', folder_name)
         os.makedirs(sample_folder, exist_ok=True)
         
